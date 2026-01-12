@@ -1,0 +1,14 @@
+[
+  {
+    "order_id": 101,
+    "customer_id": 1,
+    "order_date": "2024-01-12",
+    "order_total": 89.99
+  },
+  {
+    "order_id": 102,
+    "customer_id": 1,
+    "order_date": "2024-01-19",
+    "order_total": 154.50
+  }
+]
