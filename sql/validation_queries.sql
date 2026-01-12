@@ -1,118 +1,83 @@
-/* =========================================================
-   Problem A — Orphan Orders
-   Orders whose customer_id does not exist in customers
-   ========================================================= */
+------------------------------------------------------------
+-- TC-001 — Get all customers
+------------------------------------------------------------
 
-SELECT
-  o.order_id
-FROM orders o
-LEFT JOIN customers c
-  ON o.customer_id = c.customer_id
-WHERE c.customer_id IS NULL;
+SELECT 
+    COUNT(*) AS expected_customer_count
+FROM 
+    customers;
 
-
-/* =========================================================
-   Problem B — Negative Order Totals
-   Orders with invalid negative monetary values
-   ========================================================= */
-
-SELECT
-  order_id,
-  customer_id,
-  order_date,
-  order_total
-FROM orders
-WHERE order_total < 0;
+SELECT 
+    customer_id, 
+    customer_name
+FROM 
+    customers;
 
 
-/* =========================================================
-   Problem C — Zero-Dollar Orders
-   Orders with total equal to zero (edge-case review)
-   ========================================================= */
+------------------------------------------------------------
+-- TC-002 — Get customer by ID
+------------------------------------------------------------
 
-SELECT
-  order_id,
-  customer_id,
-  order_date,
-  order_total
-FROM orders
-WHERE order_total = 0;
-
-
-/* =========================================================
-   Problem D — Missing Required Fields
-   Orders missing required data
-   ========================================================= */
-
-SELECT *
-FROM orders
-WHERE customer_id IS NULL
-   OR order_date IS NULL
-   OR order_total IS NULL;
+SELECT 
+    customer_id, 
+    customer_name
+FROM 
+    customers
+WHERE 
+    customer_id = :customer_id;
 
 
-/* =========================================================
-   Problem E — Duplicate Primary Keys
-   ========================================================= */
+------------------------------------------------------------
+-- TC-003 — Get customer by INVALID ID (404 expected)
+------------------------------------------------------------
 
-/* Duplicate customer IDs */
-SELECT
-  c.customer_id,
-  COUNT(*) AS dup_count
-FROM customers c
-GROUP BY c.customer_id
-HAVING COUNT(*) > 1;
-
-/* Duplicate order IDs */
-SELECT
-  o.order_id,
-  COUNT(*) AS dup_count
-FROM orders o
-GROUP BY o.order_id
-HAVING COUNT(*) > 1;
+SELECT 
+    1
+FROM 
+    customers
+WHERE 
+    customer_id = :invalid_customer_id;
 
 
-/* =========================================================
-   Problem F — Customers With No Orders
-   Customers who have never placed an order
-   ========================================================= */
+------------------------------------------------------------
+-- TC-004 — Get all orders for a customer
+------------------------------------------------------------
 
-SELECT
-  c.customer_id,
-  c.customer_name
-FROM customers c
-LEFT JOIN orders o
-  ON c.customer_id = o.customer_id
-WHERE o.order_id IS NULL;
-
-
-/* =========================================================
-   Problem G — Date Filter Truth Set
-   Supports: GET /v1/customers/{customer_id}/orders?from&to
-   ========================================================= */
-
-SELECT
-  order_id,
-  customer_id,
-  order_date,
-  order_total
-FROM orders
-WHERE customer_id = :customer_id
-  AND order_date BETWEEN :from_date AND :to_date
-ORDER BY order_date, order_id;
+SELECT 
+    order_id, 
+    customer_id, 
+    order_date, 
+    order_total
+FROM 
+    orders
+WHERE 
+    customer_id = :customer_id;
 
 
-/* =========================================================
-   Problem H — Total Filter Truth Set
-   Supports: GET /v1/orders?min_total&max_total
-   ========================================================= */
+------------------------------------------------------------
+-- TC-005 — Get customer orders within a date range
+------------------------------------------------------------
 
-SELECT
-  customer_id,
-  order_id,
-  order_date,
-  order_total
-FROM orders
-WHERE order_total BETWEEN :min_total AND :max_total
-ORDER BY order_total, order_id;
+SELECT 
+    order_id, 
+    order_date, 
+    order_total
+FROM 
+    orders
+WHERE 
+    customer_id = :customer_id
+    AND order_date BETWEEN :from_date AND :to_date;
 
+
+------------------------------------------------------------
+-- TC-006 — Get orders filtered by order_total range
+------------------------------------------------------------
+
+SELECT 
+    order_id, 
+    customer_id, 
+    order_total
+FROM 
+    orders
+WHERE 
+    order_total BETWEEN :min_total AND :max_total;
