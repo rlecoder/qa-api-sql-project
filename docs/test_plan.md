@@ -1,101 +1,140 @@
-# QA Test Plan — API + SQL Validation
+# Test Plan — Customers & Orders API (v1)
 
-## 1) Purpose
-Validate that the API returns correct customer/order data and that API responses match the database (customers, orders).
+This test plan explains how I am testing the Customers & Orders API using Postman and SQL. The goal is to confirm that the API returns correct data, handles invalid inputs properly, and follows a consistent JSON format. A Postman mock server is used to simulate responses.
 
-## 2) Scope
-### Endpoints in scope
-- GET /v1/customers
-- GET /v1/customers/{customer_id}
-- GET /v1/customers/{customer_id}/orders?from=YYYY-MM-DD&to=YYYY-MM-DD
-- GET /v1/orders?min_total=NUMBER&max_total=NUMBER
+---
 
-### Out of scope (for now)
-- Auth, rate limiting, pagination, create/update/delete operations
-- Performance/load testing
+## 1. Objective
+
+The purpose of this testing is to verify that:
+- Customer and order data is returned correctly
+- API endpoints behave as described in the contract
+- Date and total amount filtering works
+- Invalid inputs return proper error responses
+- SQL validation matches expected API results
+- Responses follow the correct JSON structure
+
+---
+
+## 2. Scope
+
+The test plan covers TC-001 through TC-010:
+
+- TC-001: Get all customers
+- TC-002: Get customer by valid ID
+- TC-003: Handle invalid customer ID
+- TC-004: Get orders for a customer
+- TC-005: Filter orders by date range
+- TC-006: Filter orders by total amount
+- TC-007: Invalid date formats
+- TC-008: Reversed date ranges
+- TC-009: Non-numeric filter values
+- TC-010: Large dataset / performance behavior
+
+Out of scope:
+- POST/PUT/DELETE methods
+- Authentication
+- Pagination
 - UI testing
+- True load/performance testing
 
-## 3) Contract Rules (must always hold)
-- customer_id, order_id are integers
-- order_total is numeric and >= 0
-- order_date is ISO date (YYYY-MM-DD)
-- Every returned order must map to an existing customer (FK integrity expectation)
+---
 
-## 4) Test Environment Requirements
-- Base URL available (e.g., local server or mock server)
-- Ability to run SQL against the same dataset the API reads from
-- A known “seed” dataset (or at least stable data during testing)
+## 3. Test Environment
 
-## 5) Test Data Requirements (minimum)
-Have at least:
-- 1 customer with 0 orders
-- 1 customer with 1 order
-- 1 customer with multiple orders across different dates
-- Orders that hit boundaries:
-  - order_total = 0
-  - order_total near min/max filter edges
-  - dates exactly equal to from/to edges (to test inclusivity)
+Tools used:
+- **Postman** for API calls and mock server
+- **GitHub** for documentation
+- **SQL** for backend data validation
 
-## 6) How We’ll Execute Tests (Manual Postman-style)
-For each endpoint test:
-1. Send request
-2. Capture response JSON
-3. Validate contract rules (types, formats, required fields)
-4. Validate business logic (filters, customer scoping)
-5. Validate database truth with SQL (row counts + spot-check records)
+All responses come from the Postman mock server, not a real database.
 
-## 7) Pass/Fail Criteria
-A test **passes** if:
-- Response matches contract rules
-- Response matches expected filtering/scoping behavior
-- API results match SQL truth (count + key fields)
+---
 
-A test **fails** if:
-- Any contract rule is violated
-- Filtering returns incorrect rows (missing or extra)
-- Any order returns with a customer_id not present in customers table
-- API results disagree with SQL for the same criteria
+## 4. Test Data
 
-## 8) Defect Logging (GitHub Issues)
-When you find a defect, log:
-- Title: [Endpoint] short summary
-- Steps to reproduce (request + params)
-- Expected result (include SQL query used)
-- Actual result (include response snippet)
-- Severity: Blocker / High / Medium / Low
-- Evidence: screenshots or copied JSON (trim sensitive info)
+Test data is basic and created for practice:
 
-## 9) SQL Validation Queries (templates)
-> Replace placeholders like :customer_id, :from, :to, :min_total, :max_total
+**Customers**
+- ID 1 — Alice
+- ID 2 — Bob
 
-### A) Customers list count
-SELECT COUNT(*) AS api_expected_count
-FROM customers;
+**Orders**
+- Valid totals (positive integers)
+- Valid dates (YYYY-MM-DD)
+- Some invalid samples for negative testing
 
-### B) Single customer exists
-SELECT *
-FROM customers
-WHERE customer_id = :customer_id;
+All sample data is stored as “Examples” in Postman.
 
-### C) Orders for a customer with optional date filters
-SELECT *
-FROM orders
-WHERE customer_id = :customer_id
-  AND (:from IS NULL OR order_date >= :from)
-  AND (:to   IS NULL OR order_date <= :to)
-ORDER BY order_date, order_id;
+---
 
-### D) Orders filtered by totals
-SELECT *
-FROM orders
-WHERE (:min_total IS NULL OR order_total >= :min_total)
-  AND (:max_total IS NULL OR order_total <= :max_total)
-ORDER BY order_total, order_id;
+## 5. Test Types
 
-### E) FK integrity check (should return 0 rows)
-SELECT o.*
-FROM orders o
-LEFT JOIN customers c
-  ON c.customer_id = o.customer_id
-WHERE c.customer_id IS NULL;
+This project uses:
+- Functional testing
+- Negative testing
+- Boundary value testing
+- Data validation testing
+- Error handling verification
+- SQL comparison
 
+---
+
+## 6. Test Case Reference
+
+All test cases are documented in:
+
+docs/test_cases.md
+
+
+Each test case includes:
+- Endpoint
+- Parameters
+- Expected results
+- SQL validation
+
+---
+
+## 7. Entry Criteria
+
+Testing begins when:
+- The API contract is complete
+- Test cases are written
+- Mock server is configured
+- JSON examples exist
+
+---
+
+## 8. Exit Criteria
+
+Testing is complete when:
+- TC-001 through TC-010 are executed
+- Responses saved in `/evidence/response_samples`
+- SQL validation matches the API output
+- All defects are logged
+- No major issues remain unresolved
+
+---
+
+## 9. Risks and Assumptions
+
+**Risks**
+- Mock server may not behave like a real backend
+- Some invalid input behavior may not be simulated correctly
+
+**Assumptions**
+- Mock data remains unchanged
+- API follows the defined contract
+
+---
+
+## 10. Deliverables
+
+This project includes:
+- Test plan
+- Test cases
+- Edge cases
+- SQL validation queries
+- Postman mock server
+- Saved API responses
+- Defects log
